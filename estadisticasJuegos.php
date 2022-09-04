@@ -7,17 +7,17 @@
  * @return Array listado de juegos
  */
 function precarga_juegos_mas_ventas(){
-    $juego_mas_ventas[0] = ["juego" => 'Montaña Rusa', "precio" => 200.5, "cant" => 100];
+    $juego_mas_ventas[0] = ["juego" => 'Montaña Rusa', "precio" => 200.5, "cant" => 50];
     $juego_mas_ventas[1] = ["juego" => 'Rueda de la Fortuna', "precio" => 50.0, "cant" => 120];
     $juego_mas_ventas[2] = ["juego" => 'Carrusel', "precio" => 30.0, "cant" => 300];
     $juego_mas_ventas[3] = ["juego" => 'Barco Pirata', "precio" => 150.0, "cant" => 30];
     $juego_mas_ventas[4] = ["juego" => 'Laser Tag', "precio" => 190.0, "cant" => 70];
-    $juego_mas_ventas[5] = ["juego" => 'Montaña Rusa', "precio" => 200.5, "cant" => 50];
+    $juego_mas_ventas[5] = ["juego" => 'Montaña Rusa', "precio" => 200.5, "cant" => 30];
     $juego_mas_ventas[6] = ["juego" => 'Autitos Chocadores', "precio" => 140.0, "cant" => 60];
     $juego_mas_ventas[7] = ["juego" => 'Paseo Oscuro', "precio" => 40.0, "cant" => 250];
     $juego_mas_ventas[8] = ["juego" => 'Viaje en tren', "precio" => 70.0, "cant" => 70];
     $juego_mas_ventas[9] = ["juego" => 'El Martillo', "precio" => 180.0, "cant" => 100];
-    $juego_mas_ventas[10] = ["juego" => 'Sillas Voladora', "precio" => 200.0, "cant" => 120];
+    $juego_mas_ventas[10] = ["juego" => 'Sillas Voladoras', "precio" => 200.0, "cant" => 120];
     $juego_mas_ventas[11] = ["juego" => 'Rueda de la Fortuna', "precio" => 50.0, "cant" => 300];
     return $juego_mas_ventas;
 }
@@ -25,7 +25,7 @@ function precarga_juegos_mas_ventas(){
 /**
  * precarga de la info del monto total de los juegos del mes
  * 
- * @return Array 
+ * @return Array monto total de todos los meses
  */
 function precarga_monto_total_tickets($juego_mas_ventas){
     
@@ -35,10 +35,14 @@ function precarga_monto_total_tickets($juego_mas_ventas){
     return $tickets;
 }
 
+
 /* Inicio del programa*/
-$juego_mas_ventas = precarga_juegos_mas_ventas();
-$tickets = precarga_monto_total_tickets($juego_mas_ventas);
-menu_opciones($juego_mas_ventas, $tickets);
+
+$array_juegos = precarga_juegos_mas_ventas();
+$array_tickets = precarga_monto_total_tickets($array_juegos);
+print_r($array_tickets);
+menu_opciones($array_juegos, $array_tickets);
+
 
 /**
  * Muestra las opciones del menu
@@ -65,6 +69,8 @@ function menu(){
 
 /**
  * Menu principal del programa
+ * @param array arreglo con los juegos de mayor venta en cada mes
+ * @param array arreglo con los montos totales de cada mes
  */
 function menu_opciones(&$juego_mas_ventas, &$tickets){
 
@@ -82,19 +88,24 @@ function menu_opciones(&$juego_mas_ventas, &$tickets){
                 actualizar_juego_del_mes($juego_mas_ventas, $nombre, $mes, $precio, $cant);
                 break;
             case 2: 
-                
+                $mesMayor = buscar_mes_mayor_ventas($tickets);
+                mostrar_info_mes($juego_mas_ventas, $tickets, $mesMayor);
                 break;
             case 3: 
-                
+                $monto = solicitar_monto_de_venta();
+                $primer_mes = buscar_primer_mes_mayor_venta($tickets, $monto);
+                mostrar_info_mes($juego_mas_ventas, $tickets, $primer_mes);
                 break;
             case 4: 
                 $index = solicitar_mes();
                 mostrar_info_mes($juego_mas_ventas, $tickets, $index);
-                
                 break;
             case 5: 
+                $juegos_ordenados = heap_sort($juego_mas_ventas);
+                print_r($juegos_ordenados);
                 break; 
             case 6: 
+                echo "Saliendo...";
                 break;               
             default: 
                 echo "Ingrese una opcion valida";
@@ -104,12 +115,68 @@ function menu_opciones(&$juego_mas_ventas, &$tickets){
 }
 
 /**
- * mostrar la informacion del mes
+ * Busca el primer mes que supere el monto de venta ingresado
+ * Retorna -1 si no hubo ningun mes que supere el monto
+ * @param array $tickets array de los montos totales de todos los meses
+ * @param $monto monto ingresado
+ * @return int indice del mes
+ */
+function buscar_primer_mes_mayor_venta(&$tickets, $monto){
+    $mes = -1;
+    $limite = count($tickets);
+    $i = 0;
+
+    while ($mes == -1 && $i < $limite){
+        if ($tickets[$i] > $monto){
+            $mes = $i;
+        } else {
+            $i++;
+        }
+    }
+    return $mes;
+}
+
+/**
+ * solicita un monto de ventas
+ * @return float $monto ingresado
+ */
+function solicitar_monto_de_venta(){
+    do {
+        echo "Ingrese el monto de venta: \n";
+        $monto = trim(fgets(STDIN));
+        $flag = $monto > 0 && is_numeric($monto); //si es un numero y es coherente
+        if (!$flag){
+            echo "ERROR: Ingrese un monto coherente\n";
+        }
+    } while (!$flag);
+    return $monto;
+}
+/**
+ * busca el mes con mayor monto de ventas
+ * @param array $tickets arreglo de los monto totales de todos los meses
+ * @return int $mes indice del mes
+ */
+function buscar_mes_mayor_ventas($tickets){
+    $mes = 0; //tomo a enero como el mayor inicialmente
+    $montoAux = $tickets[0]; //dejo como primer monto el mes de enero y comparo con los demás
+    $limite = count($tickets);
+
+    for ($i = 1; $i < $limite; $i++){
+        if ($montoAux < $tickets[$i]){
+            $mes = $i;
+            $montoAux = $tickets[$i];
+        } 
+    } 
+    return $mes;
+}
+
+/**
+ * muestra la informacion completa del mes indicado
  * @param array arreglo con los juegos de mayor venta en cada mes
  * @param array arreglo con los montos totales de cada mes
  * @param int indice del mes
  */
-function mostrar_info_mes(&$juego_mas_ventas, &$tickets, $index){
+function mostrar_info_mes($juego_mas_ventas, $tickets, $index){
     $nombre = $juego_mas_ventas[$index]["juego"];
     $precio = $juego_mas_ventas[$index]["precio"];
     $cant = $juego_mas_ventas[$index]["cant"];
@@ -131,11 +198,20 @@ function mostrar_info_mes(&$juego_mas_ventas, &$tickets, $index){
     END;
 } 
 
+/**
+ * Verifica si el juego ingresado es mayor que el juego cargado en el mes
+ * Si es mayor, lo reemplaza en el arreglo
+ * @param array $juego_mas_ventas referencia al array de los juegos con mayor venta en cada mes
+ * @param string $nombre nombre del juego ingresado
+ * @param int $mes 
+ * @param int $cant cantidad de tickets vendidos
+ * @param float $precio precio del juego
+ */
 function actualizar_juego_del_mes(&$juego_mas_ventas, $nombre, $mes, $precio, $cant){
-    $montoJuego = $precio * $cant;
-    $montoActual = $juego_mas_ventas[$mes]["precio"]*$juego_mas_ventas[$mes]["cant"];
+    $montoJuego = $precio * $cant; //monto del juego ingresado
+    $montoActual = $juego_mas_ventas[$mes]["precio"]*$juego_mas_ventas[$mes]["cant"]; //monto del mes
 
-    if ($montoJuego > $montoActual){
+    if ($montoJuego > $montoActual){ 
         $juego_mas_ventas[$mes] = ["juego" => $nombre, "precio" => $precio, "cant" => $cant];
     }
 }
@@ -147,13 +223,13 @@ function actualizar_juego_del_mes(&$juego_mas_ventas, $nombre, $mes, $precio, $c
 function solicitar_cantidad(){
     do {
         echo "Ingrese la cantidad que vendio en el mes: \n";
-        $precio = trim(fgets(STDIN));
-        $flag = $precio > 0;
+        $cant = trim(fgets(STDIN));
+        $flag = $cant > 0 && is_numeric($cant);//si es un numero y es coherente
         if (!$flag){
             echo "ERROR: Ingrese una cantidad coherente\n";
         }
     } while (!$flag);
-    return $precio;
+    return $cant;
 }
 
 /**
@@ -165,7 +241,7 @@ function solicitar_precio(){
     do {
         echo "Ingrese el precio del juego: \n";
         $precio = trim(fgets(STDIN));
-        $flag = $precio > 0;
+        $flag = $precio > 0 && is_numeric($precio);//si es un numero y es coherente
         if (!$flag){
             echo "ERROR: Ingrese un precio coherente\n";
         }
@@ -230,7 +306,6 @@ function indice_a_mes($index){
  */
 function mes_a_indice($mes){
     $mes = strtolower($mes); //lo paso a miniscula para evitar problemas de mayus
-    $index = -1; 
 
     switch($mes){
         case "enero": 
@@ -268,12 +343,116 @@ function mes_a_indice($mes){
             break; 
         case "diciembre": 
             $index = 11;
-            break;                  
+            break;  
+        default: 
+            $index = -1;
+            break;                
     }
     return $index;
 }
 
+/**
+ * Metodo de ordenamiento heapsort para ordenar los juegos del parque
+ * @param array juegos con mayor monto de venta de cada mes
+ * @return array juegos ordenados de menor a mayor
+ */
+function heap_sort(&$juegos){
+    $fin = count($juegos)-1;
+    $ret = []; //arreglo a retornar
+    $pos = 0; //pos para moverme por el arreglo a retornar
 
+    //lo convierto en un heap max al otro arreglo
+    for ($i = $fin; $i >= 0; $i--){
+        $ret[$pos] = $juegos[$i];
+        sift_up($ret, $pos +1); //le sumo uno para que pueda ser de [1, n]
+        $pos++;  
+    }
+
+    while (0 < $fin){ //mientras el heap tenga elementos
+        //elimino la cima, reemplazo con el ult elemento del heap
+        $temp = $ret[0];
+        $ret[0] = $ret[$fin];
+        $ret[$fin] = $temp;
+        $fin--; //disminuyo el fin 
+
+        sift_down($ret, 1, $fin); //hundo el elemento que quedó en la cima
+    }
+    return $ret;
+}
+
+/**
+ * Compara 2 juegos por el total de ventas que tuvieron en el mes
+ * Retorna un numero negativo si juego1 < juego2
+ * Retorna 0 si juego1 = juego2
+ * Retorna un numero positivo si juego1 > juego2
+ * 
+ * @param juego $juego1 
+ * @param juego $juego2
+ * @return int valor de la comparacion
+ */
+function comparar_juegos($primer_juego, $segundo_juego){
+    $monto1 = $primer_juego["precio"] * $primer_juego["cant"];
+    $monto2 = $segundo_juego["precio"] * $segundo_juego["cant"];
+    return $monto1 - $monto2;
+}
+
+/**
+ * Verifica si el elem de la pos_hijo cumple la propiedad de heap max
+ * Si no la cumple, lo empuja hacia arriba sucesivamente (lo intercambia con su padre), hasta cumplir dicha propiedad
+ * 
+ * @param array arreglo de juegos
+ * @param int posicion del hijo (tiene que ser: (pos = posicion original + 1) por cuestiones de diseño
+ * 
+ */
+function sift_up(&$arr, $pos_hijo){
+    $aux = $arr[$pos_hijo-1];
+    $flag = false;
+
+    while (!$flag){
+        $pos_padre = ($pos_hijo / 2)-1; 
+        if ($pos_padre >= 0){ //si tiene padre
+            if (comparar_juegos($aux, $arr[$pos_padre]) > 0){ //si no comple la prop heap (su padre no es mayor que su hijo) lo intercambio
+                $arr[$pos_hijo-1] = $arr[$pos_padre];
+                $arr[$pos_padre] = $aux;
+                $pos_hijo = $pos_padre+1;
+            }else {
+                $flag = true; //ya cumple prop heap
+            }
+        } else {
+            $flag = true; //es raiz
+        }
+    }
+}
+
+/**
+ * Verifica si el elem de la pos_padre cumple la propiedad de heap max
+ * Si no la cumple, lo hunde sucesivamente (se intercambia con su hijo), hasta cumplir dicha propiedad
+ * @param array arreglo de juegos
+ * @param int $pos_padre posicion del padre que hay que acomodar. Ttiene que ser: (pos = posicion original + 1) por cuestiones de diseño
+ * @param int $ultimo posicion del limite hasta donde se quiere hundir
+ */
+function sift_down(&$arr, $pos_padre, $ultimo){
+    $pos_hijo = ($pos_padre *2)-1;
+    $temp = $arr[$pos_padre-1];
+    $flag = false;
+
+    while (!$flag && $pos_hijo <= $ultimo){
+        if ($pos_hijo < $ultimo){ //si es menor estricto tiene HD
+            if (comparar_juegos($arr[$pos_hijo+1], $arr[$pos_hijo]) > 0 ){ //si el HD es el mayor me muevo hacia el
+                $pos_hijo++; 
+            }
+        }
+        
+        if (comparar_juegos($temp, $arr[$pos_hijo])< 0){ //si el padre no es mayor que sus hijos los intercambio
+            $arr[$pos_padre-1] = $arr[$pos_hijo];
+            $arr[$pos_hijo] = $temp;
+            $pos_padre = $pos_hijo+1;  //pos_padre tiene que tener la pos original + 1
+            $pos_hijo = ($pos_padre*2)-1; 
+        } else {
+            $flag = true;
+        }
+    }
+}
 
 
 ?>
