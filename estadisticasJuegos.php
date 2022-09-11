@@ -35,15 +35,6 @@ function precarga_monto_total_tickets($juego_mas_ventas){
     return $tickets;
 }
 
-
-/* Inicio del programa*/
-
-$array_juegos = precarga_juegos_mas_ventas();
-$array_tickets = precarga_monto_total_tickets($array_juegos);
-print_r($array_tickets);
-menu_opciones($array_juegos, $array_tickets);
-
-
 /**
  * Muestra las opciones del menu
  * 
@@ -52,19 +43,27 @@ menu_opciones($array_juegos, $array_tickets);
  * @return void
  */
 function menu(){
-    echo <<<END
+    do {
+        echo <<<END
+    
+        --------------------------------- Menu ---------------------------------
+            1) Ingresar una Venta
+            2) Mostrar mes con mayor monto de ventas
+            3) Mostrar primer mes que supera un monto de ventas
+            4) Mostrar información del mes
+            5) Ordenar y mostrar juegos de menor a mayor por monto de venta
+            6) Salir
+        ------------------------------------------------------------------------
+        - Ingrese una opcion: 
+        END;
+        $opcion = trim(fgets(STDIN));
 
-    --------------------------------- Menu ---------------------------------
-        1) Ingresar una Venta
-        2) Mostrar mes con mayor monto de ventas
-        3) Mostrar primer mes que supera un monto de ventas
-        4) Mostrar información del mes
-        5) Ordenar y mostrar juegos de menor a mayor por monto de venta
-        6) Salir
-    ------------------------------------------------------------------------
-    - Ingrese una opcion: 
-    END;
-    return fgets(STDIN);
+        $salir = $opcion > 0 && $opcion <7;
+        if (!$salir){
+            echo "ERROR: Ingrese una opcion válida";
+        }
+    } while (!$salir);
+    return $opcion;
 }
 
 /**
@@ -76,7 +75,7 @@ function menu_opciones(&$juego_mas_ventas, &$tickets){
 
     do {
         $opcion = menu();
-        echo("\n");
+        //echo("\n");
 
         switch($opcion){
             case 1: 
@@ -94,7 +93,12 @@ function menu_opciones(&$juego_mas_ventas, &$tickets){
             case 3: 
                 $monto = solicitar_monto_de_venta();
                 $primer_mes = buscar_primer_mes_mayor_venta($tickets, $monto);
-                mostrar_info_mes($juego_mas_ventas, $tickets, $primer_mes);
+                if ($primer_mes != -1){
+                    mostrar_info_mes($juego_mas_ventas, $tickets, $primer_mes);
+                } else {
+                    echo "No existe ningún mes que supere este monto";
+                }
+                
                 break;
             case 4: 
                 $index = solicitar_mes();
@@ -103,14 +107,20 @@ function menu_opciones(&$juego_mas_ventas, &$tickets){
             case 5: 
                 $juegos_ordenados = heap_sort($juego_mas_ventas);
                 print_r($juegos_ordenados);
+                
+                /* Otra forma: Utilizar el metodo usort para ordenar:
+
+                $juegos_ordenados = array_merge($juego_mas_ventas);
+                usort($juegos_ordenados, function ($primer_juego, $segundo_juego){
+                    $monto1 = $primer_juego["precio"] * $primer_juego["cant"];
+                    $monto2 = $segundo_juego["precio"] * $segundo_juego["cant"];
+                    return $monto1 - $monto2;
+                });*/
                 break; 
             case 6: 
                 echo "Saliendo...";
-                break;               
-            default: 
-                echo "Ingrese una opcion valida";
                 break;
-        }
+            }               
     } while ($opcion != 6);
 }
 
@@ -351,6 +361,8 @@ function mes_a_indice($mes){
     return $index;
 }
 
+
+
 /**
  * Metodo de ordenamiento heapsort para ordenar los juegos del parque
  * @param array juegos con mayor monto de venta de cada mes
@@ -424,6 +436,7 @@ function sift_up(&$arr, $pos_hijo){
     }
 }
 
+
 /**
  * Verifica si el elem de la pos_padre cumple la propiedad de heap max
  * Si no la cumple, lo hunde sucesivamente (se intercambia con su hijo), hasta cumplir dicha propiedad
@@ -453,6 +466,14 @@ function sift_down(&$arr, $pos_padre, $ultimo){
         }
     }
 }
+
+
+/* Inicio del programa*/
+$array_juegos = precarga_juegos_mas_ventas();
+$array_tickets = precarga_monto_total_tickets($array_juegos);
+print_r($array_tickets);
+menu_opciones($array_juegos, $array_tickets);
+
 
 
 ?>
