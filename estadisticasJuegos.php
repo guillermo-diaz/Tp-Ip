@@ -105,17 +105,13 @@ function menu_opciones(&$juego_mas_ventas, &$tickets){
                 mostrar_info_mes($juego_mas_ventas, $tickets, $index);
                 break;
             case 5: 
-                $juegos_ordenados = heap_sort($juego_mas_ventas);
-                print_r($juegos_ordenados);
+                /*$juegos_ordenados = heap_sort($juego_mas_ventas);
+                print_r($juegos_ordenados);*/
                 
-                /* Otra forma: Utilizar el metodo usort para ordenar:
 
                 $juegos_ordenados = array_merge($juego_mas_ventas);
-                usort($juegos_ordenados, function ($primer_juego, $segundo_juego){
-                    $monto1 = $primer_juego["precio"] * $primer_juego["cant"];
-                    $monto2 = $segundo_juego["precio"] * $segundo_juego["cant"];
-                    return $monto1 - $monto2;
-                });*/
+                uasort($juegos_ordenados, "comparar_juegos");
+                print_r($juegos_ordenados);
                 break; 
             case 6: 
                 echo "Saliendo...";
